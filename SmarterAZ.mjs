@@ -45,6 +45,7 @@ export class SmarterAZ {
      * @property {string|null} altprice - Item price from alternate sellers (with regional formatting from Amazon).
      * @property {string} image - URL to item image.
      * @property {string|null} coupon - Item coupon if available.
+     * @property {string} link - Link to the product
      * 
      */
 
@@ -61,7 +62,8 @@ export class SmarterAZ {
                 name: page(".a-size-medium.a-color-base.a-text-normal", el).text(),
                 price: page(".a-offscreen", page(".a-price:not([data-a-strike])", el)).text(),
                 altprice: page(".a-color-base", page(".a-section.a-spacing-none.a-spacing-top-mini", el)).text() || null,
-                coupon: page(".s-coupon-highlight-color", page(".s-coupon-unclipped", el)).text() || null
+                coupon: page(".s-coupon-highlight-color", page(".s-coupon-unclipped", el)).text() || null,
+                link: `${this.__baseurl}dp/${page(el).attr()["data-asin"]}`
             };
         });
         const nav = page(".s-pagination-strip");
