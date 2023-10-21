@@ -114,6 +114,7 @@ export class SmarterAZ{
      */
     async makePageSearch(term, page, {high_price, low_price, seller, shipper}) {
         const params = new URLSearchParams();
+        params.set("k", term);
         if (high_price) params.set("high-price", high_price);
         if (low_price) params.set("low-price", low_price);
         if (seller) {
@@ -122,7 +123,6 @@ export class SmarterAZ{
             params.set("rh", "p_76:" + shipper);
         }
         params.set("page", page);
-        params.set("k", term);
         const search_url = new URL("/s?" + params.toString(), this.__baseurl);
         return this.parsePage(cheerio.load(pass(await this.__makeRequest(search_url))));
     }
@@ -141,7 +141,7 @@ export class SmarterAZ{
             }
             const page = await this.__browser.newPage();
             page.setUserAgent(this.__useragent);
-            await page.goto(this.__baseurl);
+            // await page.goto(this.__baseurl);
             await page.goto(url);
             let source = await page.content({"waitUntil": "domcontentloaded"});
             while (source.includes("https://images-na.ssl-images-amazon.com/images/G/01/error/")) {

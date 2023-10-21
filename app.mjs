@@ -7,8 +7,8 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.sendFile("./index.html", {root: process.cwd()});
+app.get("/demo.html", (req, res) => {
+    res.sendFile("./demo.html", {root: process.cwd()});
 });
 
 app.post("/search", async (req, res) => {
