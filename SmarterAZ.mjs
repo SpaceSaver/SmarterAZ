@@ -141,8 +141,19 @@ export class SmarterAZ{
             }
             const page = await this.__browser.newPage();
             page.setUserAgent(this.__useragent);
+            await page.goto(this.__baseurl);
             await page.goto(url);
-            const source = await page.content({"waitUntil": "domcontentloaded"});
+            let source = await page.content({"waitUntil": "domcontentloaded"});
+            while (source.includes("https://images-na.ssl-images-amazon.com/images/G/01/error/")) {
+                // return "error";
+                // source = await (new Promise(resolve => {
+                //     setTimeout(async () => {
+                //         resolve(await this.__makeRequest(url));
+                //     }, 5000);
+                // }));
+                await page.reload();
+                source = await page.content({"waitUntil": "domcontentloaded"});
+            }
             page.close();
             return source;
         }
