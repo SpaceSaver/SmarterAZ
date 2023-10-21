@@ -4,6 +4,7 @@
     "axios-cookiejar-support": "^4.0.7",
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.18.2",
+    "puppeteer": "^21.4.0",
     "tough-cookie": "^4.1.3"
   }
 }

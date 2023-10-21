@@ -2,33 +2,40 @@ import axios from "axios";
 import { wrapper } from "axios-cookiejar-support";
 import { CookieJar } from "tough-cookie";
 import * as cheerio from "cheerio";
+import puppeteer from "puppeteer";
 
 function pass(ingoing) {
     console.log(ingoing);
     return ingoing;
 }
 
-export class SmarterAZ {
+export class SmarterAZ{
     /**
      * Creates a new SmarterAZ object for using SmarterAZ.
      * @param {string} [AmazonURL] - Your country-specific AmazonURL, defaults to `www.amazon.com`
      * @param {Object} [options] - Options for more pedantic pieces of the app.
      * @param {string} [options.useragent] - The user agent that is used for requests to Amazon.  Defaults to one ripped from Chrome.
      * @param {import("axios").CreateAxiosDefaults} [options.axios] - Additional options for configuring axios.  (Where you'd add proxy config)
+     * @param {boolean} [options.useAxios] - Switches from the default puppeteer to using regular Axios requests which Amazon may block.
      * 
      */
     constructor(AmazonURL, options) {
         this.__azurl = AmazonURL || "www.amazon.com";
         this.__baseurl = "https://" + this.__azurl + "/"
-        this.__jar = new CookieJar();
-        const axios_options = { ...options?.axios };
-        if (!axios_options.headers) {
-            axios_options.headers = {};
+        this.__useaxios = !!options?.useAxios;
+        this.__useragent = options?.useragent || "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36";
+        if (this.__useaxios) {
+            this.__jar = new CookieJar();
+            const axios_options = { ...options?.axios };
+            if (!axios_options.headers) {
+                axios_options.headers = {};
+            }
+            if (!axios_options.headers["User-Agent"]) {
+                axios_options.headers["User-Agent"] = options?.useragent || "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36";
+            }
+            this.__client = wrapper(axios.create(axios_options));
         }
-        if (!axios_options.headers["User-Agent"]) {
-            axios_options.headers["User-Agent"] = options?.useragent || "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36";
-        }
-        this.__client = wrapper(axios.create(axios_options));
+
     }
 
     /**
@@ -85,9 +92,11 @@ export class SmarterAZ {
         const first_page = await this.makePageSearch(term, 1, {high_price, low_price, seller, shipper});
         const items = [];
         items.push.apply(items, first_page.items);
-        const last_page = first_page.max_page;
+        let last_page = first_page.max_page;
         for (let x = 2; x <= last_page; x++) {
-            items.push.apply(items, (await this.makePageSearch(term, x, {high_price, low_price, seller, shipper})).items);
+            const data = (await this.makePageSearch(term, x, {high_price, low_price, seller, shipper}))
+            items.push.apply(items, data.items);
+            if (data.max_page > last_page) last_page = data.max_page;
         }
         return items;
     }
@@ -115,6 +124,27 @@ export class SmarterAZ {
         params.set("page", page);
         params.set("k", term);
         const search_url = new URL("/s?" + params.toString(), this.__baseurl);
-        return this.parsePage(cheerio.load((await this.__client.get(search_url)).data));
+        return this.parsePage(cheerio.load(pass(await this.__makeRequest(search_url))));
+    }
+
+    /**
+     * Makes a request either with Puppeteer or Axios.
+     * @param {string} url 
+     * @returns {string} - Page content
+     */
+    async __makeRequest(url) {
+        if (this.__useaxios) {
+            return (await this.__client.get(url)).data;
+        } else {
+            if (!this.__browser) {
+                this.__browser = await puppeteer.launch({headless: true, });
+            }
+            const page = await this.__browser.newPage();
+            page.setUserAgent(this.__useragent);
+            await page.goto(url);
+            const source = await page.content({"waitUntil": "domcontentloaded"});
+            page.close();
+            return source;
+        }
     }
 }
