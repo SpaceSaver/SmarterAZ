@@ -3,6 +3,11 @@ import { wrapper } from "axios-cookiejar-support";
 import { CookieJar } from "tough-cookie";
 import * as cheerio from "cheerio";
 
+function pass(ingoing) {
+    console.log(ingoing);
+    return ingoing;
+}
+
 export class SmarterAZ {
     /**
      * Creates a new SmarterAZ object for using SmarterAZ.
@@ -60,7 +65,7 @@ export class SmarterAZ {
             };
         });
         const nav = page(".s-pagination-strip");
-        const max_page = parseInt(page(".s-pagination-item", nav).last().text());
+        const max_page = parseInt(pass(page(".s-pagination-item:not(.s-pagination-next)", nav).last().text()));
         const current_page = parseInt(page(".s-pagination-selected", nav).first().text());
         return {items, current_page, max_page};
     }
@@ -75,12 +80,12 @@ export class SmarterAZ {
      * @param {string} [param1.shipper] - ID of shipper (only appears to work with Amazon (1249137011) and is overriden by seller)
      */
     async makeSearch(term, {high_price, low_price, seller, shipper}) {
-        const first_page = this.makePageSearch(term, 1, {high_price, low_price, seller, shipper});
+        const first_page = await this.makePageSearch(term, 1, {high_price, low_price, seller, shipper});
         const items = [];
-        [].push.apply(items, first_page.items);
+        items.push.apply(items, first_page.items);
         const last_page = first_page.max_page;
-        for (const x = 2; x <= last_page; x++) {
-            [].push.apply(items, (await this.makePageSearch(term, x, {high_price, low_price, seller, shipper})).items);
+        for (let x = 2; x <= last_page; x++) {
+            items.push.apply(items, (await this.makePageSearch(term, x, {high_price, low_price, seller, shipper})).items);
         }
         return items;
     }
@@ -97,6 +102,17 @@ export class SmarterAZ {
      * @returns {AZSearchResults} - Results from the search
      */
     async makePageSearch(term, page, {high_price, low_price, seller, shipper}) {
-        const search_url = new URL(this.__baseurl, "/s");
+        const params = new URLSearchParams();
+        if (high_price) params.set("high-price", high_price);
+        if (low_price) params.set("low-price", low_price);
+        if (seller) {
+            params.set("rh", "p_6:" + seller);
+        } else if (shipper) {
+            params.set("rh", "p_76:" + shipper);
+        }
+        params.set("page", page);
+        params.set("k", term);
+        const search_url = new URL("/s?" + params.toString(), this.__baseurl);
+        return this.parsePage(cheerio.load((await this.__client.get(search_url)).data));
     }
 }
