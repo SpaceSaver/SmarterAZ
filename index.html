@@ -7,7 +7,7 @@
         <script src="https://cdn.datatables.net/v/dt/dt-1.13.6/sb-1.6.0/sp-2.2.0/datatables.min.js"></script>
         <script>
             window.onload = () => {
-                const gTable = $("#items").DataTable({responsive: true, columns: [{data: "image", render: function (data) {return `<img src="${data}" />`}}, {data: "name", render: function (data) {return `<a href="${data.l}" target="_blank">${data.n}</a>`}}, {data: "price"}]});
+                const gTable = $("#items").DataTable({responsive: true, columns: [{data: "image", render: function (data) {return `<img src="${data}" />`}}, {data: "name", render: function (data) {return `<a href="${data.l}" target="_blank">${data.n}</a>`}}, {data: "price"}, {data: "altprice"}], search: {regex: true}, resize: true});
                 $("#go").click(async () => {
                     console.log($("#asearch").val());
                     const mySearch = $("#asearch").val();
@@ -24,9 +24,9 @@
                     // });
                     gTable.clear();
                     items.forEach(itm => {
-                        gTable.row.add({image: itm.image, name: {n: itm.name, l: itm.link}, price: itm.altprice || itm.price}).draw();
+                        gTable.row.add({image: itm.image, name: {n: itm.name, l: itm.link}, price: itm.price || itm.altprice, altprice: itm.altprice || itm.price}).draw();
                     })
-                    
+                    gTable.adjust();
                 });
             }
         </script>
@@ -45,7 +45,8 @@
                 <tr>
                     <th>Image</th>
                     <th>Name</th>
-                    <th>Price</th>
+                    <th>Price (preferred)</th>
+                    <th>Alternative Price (preferred)</th>
                 </tr>
             </thead>
             <tbody>

@@ -137,7 +137,7 @@ export class SmarterAZ{
             return (await this.__client.get(url)).data;
         } else {
             if (!this.__browser) {
-                this.__browser = await puppeteer.launch({headless: true, });
+                this.__browser = await puppeteer.launch({headless: false, });
             }
             const page = await this.__browser.newPage();
             page.setUserAgent(this.__useragent);
