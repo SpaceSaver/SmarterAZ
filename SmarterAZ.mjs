@@ -68,7 +68,7 @@ export class SmarterAZ{
                 image: page(".s-image", el).attr().src,
                 name: page(".a-size-medium.a-color-base.a-text-normal", el).text(),
                 price: page(".a-offscreen", page(".a-price:not([data-a-strike])", el)).first().text(),
-                altprice: page("[data-action=\"s-show-all-offers-display\"] ~ span.a-color-base", page(".a-section.a-spacing-none.a-spacing-top-mini", el)).first().text() || null,
+                altprice: page(".a-color-base", page(".a-section.a-spacing-none.a-spacing-top-mini [data-action=\"s-show-all-offers-display\"]", el).parent()).first().text() || null,
                 coupon: page(".s-coupon-highlight-color", page(".s-coupon-unclipped", el)).text() || null,
                 link: `${this.__baseurl}dp/${page(el).attr()["data-asin"]}`
             };
