@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/demo.html", (req, res) => {
+app.get("/", (req, res) => {
     res.sendFile("./demo.html", {root: process.cwd()});
 });
 
